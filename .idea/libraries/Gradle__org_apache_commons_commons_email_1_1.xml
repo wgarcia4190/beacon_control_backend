@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.apache.commons:commons-email:1.1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-email/1.1/a05c4de7bf2e0579ac0f21e16f3737ec6fa0ff98/commons-email-1.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-email/1.1/15d67ca689a792ed8f29d0d21e2d0116fa117b7e/commons-email-1.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
