@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.6
--- Dumped by pg_dump version 9.6.2
+-- Dumped from database version 9.5.9
+-- Dumped by pg_dump version 9.6.5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -15,14 +15,14 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner:
 --
 
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner:
 --
 
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
@@ -270,24 +270,12 @@ CREATE TABLE applications (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     account_id integer,
-    test boolean DEFAULT false
+    test boolean DEFAULT false,
+    default_app boolean
 );
 
 
 ALTER TABLE applications OWNER TO "Wilson";
-
---
--- Name: applications_beacons; Type: TABLE; Schema: public; Owner: Wilson
---
-
-CREATE TABLE applications_beacons (
-    id integer NOT NULL,
-    application_id integer,
-    beacon_id integer
-);
-
-
-ALTER TABLE applications_beacons OWNER TO "Wilson";
 
 --
 -- Name: applications_beacons_id_seq; Type: SEQUENCE; Schema: public; Owner: Wilson
@@ -304,11 +292,17 @@ CREATE SEQUENCE applications_beacons_id_seq
 ALTER TABLE applications_beacons_id_seq OWNER TO "Wilson";
 
 --
--- Name: applications_beacons_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: Wilson
+-- Name: applications_beacons; Type: TABLE; Schema: public; Owner: Wilson
 --
 
-ALTER SEQUENCE applications_beacons_id_seq OWNED BY applications_beacons.id;
+CREATE TABLE applications_beacons (
+    id integer DEFAULT nextval('applications_beacons_id_seq'::regclass) NOT NULL,
+    application_id integer,
+    beacon_id integer
+);
 
+
+ALTER TABLE applications_beacons OWNER TO "Wilson";
 
 --
 -- Name: applications_id_seq; Type: SEQUENCE; Schema: public; Owner: Wilson
@@ -447,8 +441,8 @@ CREATE TABLE beacon_proximity_fields (
     name character varying,
     value character varying,
     beacon_id integer,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
 );
 
 
@@ -607,7 +601,7 @@ CREATE TABLE coupons (
     updated_at timestamp without time zone NOT NULL,
     identifier_number character varying,
     unique_identifier_number character varying,
-    encoding_type integer,
+    encoding_type character varying,
     button_font_color character varying,
     button_background_color character varying,
     button_label character varying,
@@ -1197,9 +1191,8 @@ CREATE TABLE oauth_applications (
     redirect_uri text NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    owner_id integer,
-    owner_type character varying,
-    scopes character varying DEFAULT ''::character varying NOT NULL
+    scopes character varying DEFAULT ''::character varying NOT NULL,
+    application_id integer
 );
 
 
@@ -1574,7 +1567,8 @@ CREATE TABLE zones (
     updated_at timestamp without time zone NOT NULL,
     description text,
     manager_id integer,
-    color character varying
+    color character varying,
+    beacons_count integer DEFAULT 0
 );
 
 
@@ -1641,13 +1635,6 @@ ALTER TABLE ONLY application_settings ALTER COLUMN id SET DEFAULT nextval('appli
 --
 
 ALTER TABLE ONLY applications ALTER COLUMN id SET DEFAULT nextval('applications_id_seq'::regclass);
-
-
---
--- Name: applications_beacons id; Type: DEFAULT; Schema: public; Owner: Wilson
---
-
-ALTER TABLE ONLY applications_beacons ALTER COLUMN id SET DEFAULT nextval('applications_beacons_id_seq'::regclass);
 
 
 --
@@ -1904,6 +1891,11 @@ SELECT pg_catalog.setval('accounts_id_seq', 1, true);
 --
 
 COPY activities (id, name, created_at, updated_at, payload, scheme) FROM stdin;
+17	Hello world!	2017-09-27 14:00:57.256	2017-09-27 14:00:57.256	{}	custom
+20	Beacon 2 Nearby Activity	2017-10-01 10:18:19.451	2017-10-01 10:18:19.451	\N	custom
+22	Url Activity	2017-10-01 16:46:46.264	2017-10-01 16:46:46.264	www.google.com	url
+23	URL Activity	2017-10-01 16:49:37.072	2017-10-01 16:49:37.072	www.google.com	url
+30	Coupon Activity 5	2017-10-04 20:25:52.132	2017-10-04 20:25:52.132	\N	coupon
 \.
 
 
@@ -1911,7 +1903,7 @@ COPY activities (id, name, created_at, updated_at, payload, scheme) FROM stdin;
 -- Name: activities_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('activities_id_seq', 1, false);
+SELECT pg_catalog.setval('activities_id_seq', 30, true);
 
 
 --
@@ -1920,6 +1912,8 @@ SELECT pg_catalog.setval('activities_id_seq', 1, false);
 
 COPY admins (id, email, encrypted_password, reset_password_token, reset_password_sent_at, remember_created_at, sign_in_count, current_sign_in_at, last_sign_in_at, current_sign_in_ip, last_sign_in_ip, confirmation_token, confirmed_at, confirmation_sent_at, created_at, updated_at, default_beacon_uuid, account_id, role, correlation_id, walkthrough) FROM stdin;
 1	admin@example.com	$2a$10$y56ZxepReb8DXkYxdl0XTO7EZOU7G0kozplTKv6r91iTlz32SvaUq	\N	\N	\N	0	\N	\N	\N	\N	bb527a7dcf1d15cf8d17e3e0181d322d4177988a0fc8398bc6e0b783460f4c57	2017-04-17 21:38:18.365567	2017-04-17 21:38:16.68618	2017-04-17 21:38:16.389192	2017-04-17 21:38:16.389192	\N	1	0	\N	f
+15	garcia.m.wilson@gmail.com	glADFfQUClQ3D9qp9bKABKLiIsCSI3P0W3AIBA3XCONBEwGtDPn4FQ==	\N	\N	\N	0	\N	\N	\N	\N	3016496539166067961	2017-05-02 20:31:30.593	\N	2017-05-02 20:31:30.594	2017-05-06 14:00:59.308	df423e23-5423-2345-2345-234523452345	1	0	\N	f
+21	malabro37@gmail.com	nrUV5IfzDHGAPUQ5pnjN/YrD6himxaKxnSmZiTLWz4aDzfCWqNYQSg==	\N	\N	\N	1161	2017-10-29 09:18:12.174	2017-10-22 16:38:49.948	10.0.0.22	10.0.0.22	5990672920563371169	2017-09-16 16:53:02.973	2017-09-16 16:34:00.898	2017-09-16 16:34:00.898	2017-10-29 09:18:12.175	\N	1	0	\N	f
 \.
 
 
@@ -1927,7 +1921,7 @@ COPY admins (id, email, encrypted_password, reset_password_token, reset_password
 -- Name: admins_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('admins_id_seq', 1, true);
+SELECT pg_catalog.setval('admins_id_seq', 21, true);
 
 
 --
@@ -1965,8 +1959,9 @@ SELECT pg_catalog.setval('application_settings_id_seq', 1, false);
 -- Data for Name: applications; Type: TABLE DATA; Schema: public; Owner: Wilson
 --
 
-COPY applications (id, name, created_at, updated_at, account_id, test) FROM stdin;
-1	App	2017-04-17 21:38:18.413615	2017-04-17 21:38:18.413615	1	t
+COPY applications (id, name, created_at, updated_at, account_id, test, default_app) FROM stdin;
+1	App	2017-04-17 21:38:18.413615	2017-04-17 21:38:18.413615	1	t	f
+17	AppTestWithCoupons	2017-10-02 20:22:52.499	2017-10-02 20:22:52.499	1	t	t
 \.
 
 
@@ -1975,6 +1970,11 @@ COPY applications (id, name, created_at, updated_at, account_id, test) FROM stdi
 --
 
 COPY applications_beacons (id, application_id, beacon_id) FROM stdin;
+15	17	34
+16	17	28
+17	17	28
+18	17	35
+19	17	27
 \.
 
 
@@ -1982,14 +1982,14 @@ COPY applications_beacons (id, application_id, beacon_id) FROM stdin;
 -- Name: applications_beacons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('applications_beacons_id_seq', 1, false);
+SELECT pg_catalog.setval('applications_beacons_id_seq', 19, true);
 
 
 --
 -- Name: applications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('applications_id_seq', 1, true);
+SELECT pg_catalog.setval('applications_id_seq', 17, true);
 
 
 --
@@ -2012,9 +2012,10 @@ SELECT pg_catalog.setval('applications_zones_id_seq', 1, false);
 --
 
 COPY beacon_configs (id, beacon_id, data, beacon_updated_at, created_at, updated_at) FROM stdin;
-1	1	--- !ruby/hash:ActiveSupport::HashWithIndifferentAccess\nbattery_level: \ndevice_id: \nlast_action: \naverage_connection_interval: \nlatest_firmware: true\nsignal_interval: 350\ntransmission_power: 1\nmaster: \nslaves: []\n	\N	2017-04-17 21:38:18.549648	2017-04-17 21:38:18.549648
-2	2	--- !ruby/hash:ActiveSupport::HashWithIndifferentAccess\nbattery_level: \ndevice_id: \nlast_action: \naverage_connection_interval: \nlatest_firmware: true\nsignal_interval: 350\ntransmission_power: 1\nmaster: \nslaves: []\n	\N	2017-04-17 21:38:18.600701	2017-04-17 21:38:18.600701
-3	3	--- !ruby/hash:ActiveSupport::HashWithIndifferentAccess\nbattery_level: \ndevice_id: \nlast_action: \naverage_connection_interval: \nlatest_firmware: true\nsignal_interval: 350\ntransmission_power: 1\nmaster: \nslaves: []\n	\N	2017-04-17 21:38:18.658614	2017-04-17 21:38:18.658614
+21	27	{"device_id":"Unknown","vendor":"BlueSense","last_action":"2017-09-23T19:42:52.368Z","battery":"Unknown","firmware":"Unknown","average_connection_intervals":"Unknown","status":"Active"}	2017-09-23 15:42:52.428	2017-09-23 15:42:52.436	2017-09-23 15:42:52.436
+22	28	{"device_id":"Unknown","vendor":"Glimworm","last_action":"2017-09-24T13:48:12.640Z","battery":"Unknown","firmware":"Unknown","average_connection_intervals":"Unknown","status":"Active"}	2017-09-24 09:48:12.703	2017-09-24 09:48:12.713	2017-09-24 09:48:12.713
+28	34	{"device_id":"Unknown","vendor":"Estimote","last_action":"2017-09-29T13:58:23.562Z","battery":"Unknown","firmware":"Unknown","average_connection_intervals":"Unknown","status":"Active"}	2017-09-29 09:58:23.618	2017-09-29 09:58:23.624	2017-09-29 09:58:23.624
+29	35	{"device_id":"Unknown","vendor":"Kontakt","last_action":"2017-09-29T15:51:43.070Z","battery":"Unknown","firmware":"Unknown","average_connection_intervals":"Unknown","status":"Active"}	2017-09-29 11:51:43.088	2017-09-29 11:51:43.093	2017-09-29 11:51:43.093
 \.
 
 
@@ -2022,7 +2023,7 @@ COPY beacon_configs (id, beacon_id, data, beacon_updated_at, created_at, updated
 -- Name: beacon_configs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('beacon_configs_id_seq', 3, true);
+SELECT pg_catalog.setval('beacon_configs_id_seq', 30, true);
 
 
 --
@@ -2045,27 +2046,15 @@ SELECT pg_catalog.setval('beacon_presence_stats_id_seq', 1, false);
 --
 
 COPY beacon_proximity_fields (id, name, value, beacon_id, created_at, updated_at) FROM stdin;
-1	protocol	iBeacon	1	2017-04-17 21:38:18.557443	2017-04-17 21:38:18.557443
-2	uuid	8315A297-D8DD-4591-946D-9D511622DFB8	1	2017-04-17 21:38:18.561084	2017-04-17 21:38:18.561084
-3	major	1	1	2017-04-17 21:38:18.563796	2017-04-17 21:38:18.563796
-4	minor	2	1	2017-04-17 21:38:18.565662	2017-04-17 21:38:18.565662
-5	namespace	\N	1	2017-04-17 21:38:18.567497	2017-04-17 21:38:18.567497
-6	instance	\N	1	2017-04-17 21:38:18.57016	2017-04-17 21:38:18.57016
-7	url	\N	1	2017-04-17 21:38:18.57212	2017-04-17 21:38:18.57212
-8	protocol	iBeacon	2	2017-04-17 21:38:18.606935	2017-04-17 21:38:18.606935
-9	uuid	5EB04E92-93EE-4DCA-87C7-ACCC04F8D06B	2	2017-04-17 21:38:18.608995	2017-04-17 21:38:18.608995
-10	major	1	2	2017-04-17 21:38:18.61148	2017-04-17 21:38:18.61148
-11	minor	2	2	2017-04-17 21:38:18.613356	2017-04-17 21:38:18.613356
-12	namespace	\N	2	2017-04-17 21:38:18.615928	2017-04-17 21:38:18.615928
-13	instance	\N	2	2017-04-17 21:38:18.618861	2017-04-17 21:38:18.618861
-14	url	\N	2	2017-04-17 21:38:18.621635	2017-04-17 21:38:18.621635
-15	protocol	iBeacon	3	2017-04-17 21:38:18.667814	2017-04-17 21:38:18.667814
-16	uuid	77F86E8B-981D-4873-B5BA-F169D62ED810	3	2017-04-17 21:38:18.670122	2017-04-17 21:38:18.670122
-17	major	1	3	2017-04-17 21:38:18.672534	2017-04-17 21:38:18.672534
-18	minor	2	3	2017-04-17 21:38:18.674618	2017-04-17 21:38:18.674618
-19	namespace	\N	3	2017-04-17 21:38:18.676807	2017-04-17 21:38:18.676807
-20	instance	\N	3	2017-04-17 21:38:18.679125	2017-04-17 21:38:18.679125
-21	url	\N	3	2017-04-17 21:38:18.681486	2017-04-17 21:38:18.681486
+78	minor	1	28	2017-09-24 09:48:12.709293	2017-09-24 09:48:12.709293
+79	major	10	28	2017-09-24 09:48:12.709293	2017-09-24 09:48:12.709293
+90	minor	1	34	2017-09-29 09:58:23.622036	2017-09-29 09:58:23.622036
+91	major	10	34	2017-09-29 09:58:23.622036	2017-09-29 09:58:23.622036
+92	namespace	qwerqwer	35	2017-09-29 11:51:43.092364	2017-09-29 11:51:43.092364
+93	instance	qwerqwer	35	2017-09-29 11:51:43.092364	2017-09-29 11:51:43.092364
+94	interval	3241234	35	2017-09-29 11:51:43.092364	2017-09-29 11:51:43.092364
+77	major	001e	27	2017-09-23 15:42:52.435415	2017-09-23 15:42:52.435415
+76	minor	0001	27	2017-09-23 15:42:52.435415	2017-09-23 15:42:52.435415
 \.
 
 
@@ -2073,7 +2062,7 @@ COPY beacon_proximity_fields (id, name, value, beacon_id, created_at, updated_at
 -- Name: beacon_proximity_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('beacon_proximity_fields_id_seq', 21, true);
+SELECT pg_catalog.setval('beacon_proximity_fields_id_seq', 96, true);
 
 
 --
@@ -2081,9 +2070,10 @@ SELECT pg_catalog.setval('beacon_proximity_fields_id_seq', 21, true);
 --
 
 COPY beacons (id, name, created_at, updated_at, lat, lng, floor, account_id, zone_id, manager_id, location, protocol, vendor, proximity_uuid) FROM stdin;
-1	Sample beacon 1	2017-04-17 21:38:18.545174	2017-04-17 21:38:18.545174	\N	\N	\N	1	\N	\N	\N	iBeacon	Other	ODMxNWEyOTctZDhkZC00NTkxLTk0NmQtOWQ1MTE2MjJkZmI4MTJpQmVhY29u\n
-2	Sample beacon 2	2017-04-17 21:38:18.596997	2017-04-17 21:38:18.596997	\N	\N	1	1	\N	\N	\N	iBeacon	Other	NWViMDRlOTItOTNlZS00ZGNhLTg3YzctYWNjYzA0ZjhkMDZiMTJpQmVhY29u\n
-3	Sample beacon 3	2017-04-17 21:38:18.654208	2017-04-17 21:38:18.768608	\N	\N	2	1	2	\N	\N	iBeacon	Other	NzdGODZFOEItOTgxRC00ODczLUI1QkEtRjE2OUQ2MkVEODEwMTJpQmVhY29u\n
+34	Beacon Test with Activity	2017-09-29 09:58:23.618	2017-09-29 09:58:23.618	18.462400	-69.988200	0	1	\N	21	Calle María Trinidad Sánchez, Santo Domingo, Dominican Republic	iBeacon	Estimote	12341234-1235-2363-4746-dfad1235adfa
+35	Beacon test with activity 2	2017-09-29 11:51:43.088	2017-09-29 11:51:43.088	18.462400	-69.988200	0	1	\N	21	Calle María Trinidad Sánchez, Santo Domingo, Dominican Republic	Eddystone	Kontakt	\N
+27	Beacon Zone 2	2017-09-23 15:42:52.428	2017-09-23 15:42:52.428	18.466800	-69.894400	1	1	5	21	Calle Arzobispo Portes, Santo Domingo 10208, Dominican Republic	iBeacon	BlueSense	7890afcb-c789-0abd-c90d-fac98d2389aa
+28	Beacon No Zone	2017-09-24 09:48:12.703	2017-09-25 15:28:09.919	18.466700	-69.894400	0	1	\N	21	Calle Arzobispo Portes, Santo Domingo 10208, Dominican Republic	iBeacon	Glimworm	2345345d-adfa-e435-2346-546dfade1351
 \.
 
 
@@ -2091,7 +2081,7 @@ COPY beacons (id, name, created_at, updated_at, lat, lng, floor, account_id, zon
 -- Name: beacons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('beacons_id_seq', 3, true);
+SELECT pg_catalog.setval('beacons_id_seq', 36, true);
 
 
 --
@@ -2130,6 +2120,7 @@ SELECT pg_catalog.setval('coupon_images_id_seq', 1, false);
 --
 
 COPY coupons (id, template, name, title, description, activity_id, created_at, updated_at, identifier_number, unique_identifier_number, encoding_type, button_font_color, button_background_color, button_label, button_link) FROM stdin;
+1	template_3	Coupon1	Title	Description	30	2017-10-04 20:25:52.157	2017-10-04 20:25:52.157	456	123	code_128	#000000	#000000	\N	\N
 \.
 
 
@@ -2137,7 +2128,7 @@ COPY coupons (id, template, name, title, description, activity_id, created_at, u
 -- Name: coupons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('coupons_id_seq', 1, false);
+SELECT pg_catalog.setval('coupons_id_seq', 1, true);
 
 
 --
@@ -2145,6 +2136,10 @@ SELECT pg_catalog.setval('coupons_id_seq', 1, false);
 --
 
 COPY custom_attributes (id, name, value, activity_id, created_at, updated_at) FROM stdin;
+15	text	Your beacon is working.	17	2017-09-27 14:00:57.26	2017-09-27 14:00:57.26
+16	text	Title	17	2017-10-29 11:16:16.177886	2017-10-29 11:16:16.177886
+17	text	Your beacon is working	30	2017-10-29 11:49:13.636137	2017-10-29 11:49:13.636137
+18	text	title	30	2017-10-29 11:50:39.654835	2017-10-29 11:50:39.654835
 \.
 
 
@@ -2152,7 +2147,7 @@ COPY custom_attributes (id, name, value, activity_id, created_at, updated_at) FR
 -- Name: custom_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('custom_attributes_id_seq', 1, false);
+SELECT pg_catalog.setval('custom_attributes_id_seq', 26, true);
 
 
 --
@@ -2326,6 +2321,7 @@ SELECT pg_catalog.setval('extension_settings_id_seq', 1, false);
 --
 
 COPY mobile_devices (id, user_id, push_token, os, environment, active, last_sign_in_at, created_at, updated_at, correlation_id) FROM stdin;
+1	1		0	0	t	2017-10-29 09:17:56.598	2017-10-29 09:17:56.599	2017-10-29 09:17:56.599	\N
 \.
 
 
@@ -2333,7 +2329,7 @@ COPY mobile_devices (id, user_id, push_token, os, environment, active, last_sign
 -- Name: mobile_devices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('mobile_devices_id_seq', 1, false);
+SELECT pg_catalog.setval('mobile_devices_id_seq', 1, true);
 
 
 --
@@ -2370,9 +2366,8 @@ SELECT pg_catalog.setval('oauth_access_tokens_id_seq', 1, false);
 -- Data for Name: oauth_applications; Type: TABLE DATA; Schema: public; Owner: Wilson
 --
 
-COPY oauth_applications (id, name, uid, secret, redirect_uri, created_at, updated_at, owner_id, owner_type, scopes) FROM stdin;
-1	Beacon OS	eb185cebe64bf87cf7f81e27e97d6610b26c641eaf1a4d20ceb95918de9e6616	d374bb60dcf740d1faf78ed25fb796ae567320d86e94af6ab4d18071d9915429	urn:ietf:wg:oauth:2.0:oob	2017-04-17 21:38:16.21428	2017-04-17 21:38:16.21428	1	Brand	
-2	App	df424eb83e24f41a6afb6effe3e4cfc279d3b8da26d08ef21f27a749651d57c8	50d549f3374e4fde8e07d4a8ae229c41159b1226371133819ec8e1c544829cde	urn:ietf:wg:oauth:2.0:oob	2017-04-17 21:38:18.422467	2017-04-17 21:38:18.422467	1	Application	
+COPY oauth_applications (id, name, uid, secret, redirect_uri, created_at, updated_at, scopes, application_id) FROM stdin;
+5	AppTestWithCoupons	epy9dqozuo80mbzn7p81ei5qqtehfttpgowf7qc5y4n3oln6j0v16ut29ki03a5r	ciwbxtz73ul8g6m0islkd278iqxeloaghrgnzflcu5j78bvqmaud5fb18ba4s9q0	 	2017-10-02 20:22:52.502	2017-10-02 20:22:52.502		17
 \.
 
 
@@ -2380,7 +2375,7 @@ COPY oauth_applications (id, name, uid, secret, redirect_uri, created_at, update
 -- Name: oauth_applications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('oauth_applications_id_seq', 2, true);
+SELECT pg_catalog.setval('oauth_applications_id_seq', 5, true);
 
 
 --
@@ -2549,6 +2544,7 @@ COPY schema_migrations (version) FROM stdin;
 --
 
 COPY triggers (id, created_at, updated_at, event_type, application_id, dwell_time, type, activity_id, test) FROM stdin;
+23	2017-10-04 20:25:52.137	2017-10-04 20:25:52.137	leave	17	\N	BeaconTrigger	30	f
 \.
 
 
@@ -2556,7 +2552,7 @@ COPY triggers (id, created_at, updated_at, event_type, application_id, dwell_tim
 -- Name: triggers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('triggers_id_seq', 1, false);
+SELECT pg_catalog.setval('triggers_id_seq', 23, true);
 
 
 --
@@ -2564,6 +2560,7 @@ SELECT pg_catalog.setval('triggers_id_seq', 1, false);
 --
 
 COPY triggers_sources (id, trigger_id, source_id, source_type) FROM stdin;
+22	23	27	Beacon
 \.
 
 
@@ -2571,7 +2568,7 @@ COPY triggers_sources (id, trigger_id, source_id, source_type) FROM stdin;
 -- Name: triggers_sources_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('triggers_sources_id_seq', 1, false);
+SELECT pg_catalog.setval('triggers_sources_id_seq', 22, true);
 
 
 --
@@ -2579,6 +2576,7 @@ SELECT pg_catalog.setval('triggers_sources_id_seq', 1, false);
 --
 
 COPY users (id, client_id, application_id) FROM stdin;
+1	epy9dqozuo80mbzn7p81ei5qqtehfttpgowf7qc5y4n3oln6j0v16ut29ki03a5r	17
 \.
 
 
@@ -2608,10 +2606,14 @@ SELECT pg_catalog.setval('zone_presence_stats_id_seq', 1, false);
 -- Data for Name: zones; Type: TABLE DATA; Schema: public; Owner: Wilson
 --
 
-COPY zones (id, name, account_id, created_at, updated_at, description, manager_id, color) FROM stdin;
-1	test zone 1	1	2017-04-17 21:38:18.709526	2017-04-17 21:38:18.709526	\N	\N	FF6F3A
-2	test zone 2	1	2017-04-17 21:38:18.718388	2017-04-17 21:38:18.718388	\N	\N	FFA800
-3	test zone 2	1	2017-04-17 21:38:18.726284	2017-04-17 21:38:18.726284	\N	\N	FFCB00
+COPY zones (id, name, account_id, created_at, updated_at, description, manager_id, color, beacons_count) FROM stdin;
+1	test zone 1	1	2017-04-17 21:38:18.709526	2017-04-17 21:38:18.709526	\N	\N	FF6F3A	\N
+2	test zone 2	1	2017-04-17 21:38:18.718388	2017-04-17 21:38:18.718388	\N	\N	FFA800	\N
+3	test zone 2	1	2017-04-17 21:38:18.726284	2017-04-17 21:38:18.726284	\N	\N	FFCB00	\N
+5	Test Zone 2	1	2017-09-16 22:03:01.13	2017-09-16 22:03:01.13	Testing Service from UI	21	rgb(91, 105, 195)	0
+14	Test Zone 3	1	2017-09-24 08:54:52.673	2017-09-24 08:54:52.673	Test Zone	21	rgb(5, 121, 111)	0
+17	Zone from Mobile	1	2017-10-22 15:43:05.779	2017-10-22 15:43:05.779	\N	21	rgb(172, 65, 190)	0
+19	Zone mobile2	1	2017-10-22 16:28:36.429	2017-10-22 16:28:36.429	\N	21	rgb(155, 205, 95)	0
 \.
 
 
@@ -2619,7 +2621,7 @@ COPY zones (id, name, account_id, created_at, updated_at, description, manager_i
 -- Name: zones_id_seq; Type: SEQUENCE SET; Schema: public; Owner: Wilson
 --
 
-SELECT pg_catalog.setval('zones_id_seq', 3, true);
+SELECT pg_catalog.setval('zones_id_seq', 19, true);
 
 
 --
@@ -3208,13 +3210,6 @@ CREATE UNIQUE INDEX index_oauth_access_tokens_on_token ON oauth_access_tokens US
 
 
 --
--- Name: index_oauth_applications_on_owner_id_and_owner_type; Type: INDEX; Schema: public; Owner: Wilson
---
-
-CREATE INDEX index_oauth_applications_on_owner_id_and_owner_type ON oauth_applications USING btree (owner_id, owner_type);
-
-
---
 -- Name: index_oauth_applications_on_uid; Type: INDEX; Schema: public; Owner: Wilson
 --
 
@@ -3285,6 +3280,54 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 
 
 --
+-- Name: applications_beacons applications_beacons_applications_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY applications_beacons
+    ADD CONSTRAINT applications_beacons_applications_fk FOREIGN KEY (application_id) REFERENCES applications(id);
+
+
+--
+-- Name: applications_beacons applications_beacons_beacons_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY applications_beacons
+    ADD CONSTRAINT applications_beacons_beacons_fk FOREIGN KEY (beacon_id) REFERENCES beacons(id);
+
+
+--
+-- Name: beacons beacons_admins_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY beacons
+    ADD CONSTRAINT beacons_admins_fk FOREIGN KEY (manager_id) REFERENCES admins(id);
+
+
+--
+-- Name: coupon_images coupon_images_coupons_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY coupon_images
+    ADD CONSTRAINT coupon_images_coupons_fk FOREIGN KEY (coupon_id) REFERENCES coupons(id);
+
+
+--
+-- Name: coupons coupons_activities_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY coupons
+    ADD CONSTRAINT coupons_activities_fk FOREIGN KEY (activity_id) REFERENCES activities(id);
+
+
+--
+-- Name: custom_attributes custom_attributes_activities_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY custom_attributes
+    ADD CONSTRAINT custom_attributes_activities_fk FOREIGN KEY (activity_id) REFERENCES activities(id);
+
+
+--
 -- Name: applications fk_rails_6661d1683d; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
 --
 
@@ -3346,6 +3389,46 @@ ALTER TABLE ONLY rpush_apps
 
 ALTER TABLE ONLY beacons
     ADD CONSTRAINT index_beacons_on_account_id FOREIGN KEY (account_id) REFERENCES accounts(id);
+
+
+--
+-- Name: oauth_applications oauth_applications_applications_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY oauth_applications
+    ADD CONSTRAINT oauth_applications_applications_fk FOREIGN KEY (application_id) REFERENCES applications(id);
+
+
+--
+-- Name: triggers triggers_activities_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY triggers
+    ADD CONSTRAINT triggers_activities_fk FOREIGN KEY (activity_id) REFERENCES activities(id);
+
+
+--
+-- Name: triggers triggers_applications_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY triggers
+    ADD CONSTRAINT triggers_applications_fk FOREIGN KEY (application_id) REFERENCES applications(id);
+
+
+--
+-- Name: triggers_sources triggers_sources_triggers_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY triggers_sources
+    ADD CONSTRAINT triggers_sources_triggers_fk FOREIGN KEY (trigger_id) REFERENCES triggers(id);
+
+
+--
+-- Name: zones zones_admins_fk; Type: FK CONSTRAINT; Schema: public; Owner: Wilson
+--
+
+ALTER TABLE ONLY zones
+    ADD CONSTRAINT zones_admins_fk FOREIGN KEY (manager_id) REFERENCES admins(id);
 
 
 --
